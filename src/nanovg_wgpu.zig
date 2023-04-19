@@ -5,9 +5,17 @@ const gpu = @import("gpu");
 const nvg = @import("nanovg.zig");
 const internal = @import("internal.zig");
 
+pub const DeferContext = anyopaque;
+
+pub const DeferOptions = struct {
+    cb: *const fn (*DeferContext, *gpu.CommandBuffer) void,
+    ctx: *DeferContext,
+};
+
 pub const Options = struct {
     antialias: bool = false,
     stencil_strokes: bool = false,
+    defer_command: ?DeferOptions = null,
     // debug: bool = false,
 };
 
@@ -1136,8 +1144,13 @@ fn renderFlush(uptr: *anyopaque) void {
 
         var command = command_encoder.finish(null);
         command_encoder.release();
-        ctx.device.getQueue().submit(&[1]*const gpu.CommandBuffer{command});
-        command.release();
+
+        if (ctx.options.defer_command) |opt| {
+            opt.cb(opt.ctx, command);
+        } else {
+            ctx.device.getQueue().submit(&[1]*const gpu.CommandBuffer{command});
+            command.release();
+        }
 
         ctx.verts.clearRetainingCapacity();
         ctx.paths.clearRetainingCapacity();

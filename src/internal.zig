@@ -282,26 +282,6 @@ pub const Context = struct {
     }
 
     pub fn beginFrame(ctx: *Context, window_width: f32, window_height: f32, device_pixel_ratio: f32) void {
-        ctx.states.clearRetainingCapacity();
-        ctx.save();
-        ctx.reset();
-
-        ctx.setDevicePixelRatio(device_pixel_ratio);
-
-        ctx.params.renderViewport(ctx.params.user_ptr, window_width, window_height, device_pixel_ratio);
-
-        ctx.draw_call_count = 0;
-        ctx.fill_tri_count = 0;
-        ctx.stroke_tri_count = 0;
-        ctx.text_tri_count = 0;
-    }
-
-    pub fn cancelFrame(ctx: *Context) void {
-        ctx.params.renderCancel(ctx.params.user_ptr);
-    }
-
-    pub fn endFrame(ctx: *Context) void {
-        ctx.params.renderFlush(ctx.params.user_ptr);
         if (ctx.font_image_idx != 0) {
             const font_image = ctx.font_images[ctx.font_image_idx];
             // delete images that are smaller than current one
@@ -333,6 +313,27 @@ pub const Context = struct {
             ctx.font_images[0] = font_image;
             ctx.font_image_idx = 0;
         }
+
+        ctx.states.clearRetainingCapacity();
+        ctx.save();
+        ctx.reset();
+
+        ctx.setDevicePixelRatio(device_pixel_ratio);
+
+        ctx.params.renderViewport(ctx.params.user_ptr, window_width, window_height, device_pixel_ratio);
+
+        ctx.draw_call_count = 0;
+        ctx.fill_tri_count = 0;
+        ctx.stroke_tri_count = 0;
+        ctx.text_tri_count = 0;
+    }
+
+    pub fn cancelFrame(ctx: *Context) void {
+        ctx.params.renderCancel(ctx.params.user_ptr);
+    }
+
+    pub fn endFrame(ctx: *Context) void {
+        ctx.params.renderFlush(ctx.params.user_ptr);
     }
 
     pub fn appendCommands(ctx: *Context, vals_src: anytype) void {
